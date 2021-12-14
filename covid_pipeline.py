@@ -13,8 +13,9 @@ from matplotlib.dates import DateFormatter
 from pathlib import Path
 
 # TODO
+from pathlib import Path
 
-output_dir = f"{os.getcwd()}/output"
+output_dir = os.path.join(os.getcwd(), "output")
 
 
 class DownloadDataset(luigi.Task):
@@ -43,9 +44,13 @@ class DownloadDataset(luigi.Task):
         "ingressi_terapia_intensiva": "new_entries_intensive_care",
         "note_test": "notes_tests",
         "note_casi": "notes_cases",
+        "totale_positivi_test_molecolare": "total_positives_molecular_test",
+        "totale_positivi_test_antigenico_rapido": "total_positives_antigenic_test_rapid",
+        "tamponi_test_molecolare": "swabs_test_molecular",
+        "tamponi_test_antigenico_rapido": "swabs_test_antigenic_rapid",
     }
     data_url = "https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-andamento-nazionale/dpc-covid19-ita-andamento-nazionale.csv"
-    output_folder = f"{output_dir}/dataset"
+    output_folder = os.path.join(output_dir, "dataset")
 
     def output(self):
         return LocalTarget(
@@ -75,7 +80,7 @@ class DataPreProcessing(luigi.Task):
     def requires(self):
         return DownloadDataset(self.dataset_version, self.dataset_name)
 
-    output_folder = f"{output_dir}/processed"
+    output_folder = os.path.join(output_dir, "processed")
 
     def output(self):
         return LocalTarget(
@@ -93,6 +98,15 @@ class DataPreProcessing(luigi.Task):
         df_data["diff_death"] = df_data["death"].diff()
         df_data["diff_intensive_care"] = df_data["intensive_care"].diff()
         df_data["diff_performed_tests"] = df_data["performed_tests"].diff()
+        # .
+        df_data["diff_recovered"] = df_data["recovered"].diff()
+        df_data["ratio_molecular"] = (
+            df_data["total_positives_molecular_test"] / df_data["swabs_test_molecular"]
+        )
+        df_data["ratio_antigenic"] = (
+            df_data["total_positives_antigenic_test_rapid"]
+            / df_data["swabs_test_antigenic_rapid"]
+        )
         return df_data
 
 
@@ -119,11 +133,16 @@ class PlotTrend(luigi.Task):
         Path(self.output_folder).mkdir(parents=True, exist_ok=True)
         fig.savefig(self.output().path)
 
-    def plotDateTrend(self, x_date, y, attribute, interval=20):
+    def plotDateTrend(self, x_date, y, attribute, interval=40):
         fig, ax = plt.subplots(figsize=(12, 5))
         ax.grid()
+        from datetime import datetime
+
+        x_date = [datetime.strptime(d, "%Y-%m-%d %H:%M:%S") for d in x_date]
         ax.scatter(x_date, y, s=3)
         ax.set(xlabel="Date", ylabel=attribute, title=attribute)
+
+        print(x_date)
         date_form = DateFormatter("%d-%m")
         ax.xaxis.set_major_formatter(date_form)
         ax.xaxis.set_major_locator(mdates.DayLocator(interval=interval))
@@ -134,7 +153,7 @@ class AggregateInReport(luigi.Task):
 
     dataset_version = DateParameter(default=datetime.date.today())
     dataset_name = Parameter(default="covidIT")
-    output_folder = f"{output_dir}/report_trends"
+    output_folder = os.path.join(output_dir, "report_trends")
 
     # --> Alternative for dynamic report --> run as --attributes '["intensive_care", "total_positive", "death"]'
     # attributes = ListParameter(default=["intensive_care", "total_positive", "recovered"])
@@ -149,7 +168,10 @@ class AggregateInReport(luigi.Task):
 
     def output(self):
         return LocalTarget(
-            f"{self.output_folder}/{self.dataset_name}_report_trends_v{self.dataset_version}.html"
+            os.path.join(
+                self.output_folder,
+                f"{self.dataset_name}_report_trends_v{self.dataset_version}.html",
+            )
         )
 
     def run(self):
@@ -181,11 +203,14 @@ class DataTransform(luigi.Task):
     def requires(self):
         return DataPreProcessing(self.dataset_version, self.dataset_name)
 
-    output_folder = f"{output_dir}/transformed_window"
+    output_folder = os.path.join(output_dir, "transformed_window")
 
     def output(self):
         return LocalTarget(
-            f"{self.output_folder}/{self.dataset_name}_transformed_window_w{self.window_size}_{self.attribute}_v{self.dataset_version}.csv"
+            os.path.join(
+                self.output_folder,
+                f"{self.dataset_name}_transformed_window_w{self.window_size}_{self.attribute}_v{self.dataset_version}.csv",
+            )
         )
 
     def run(self):
@@ -220,11 +245,14 @@ class Modeling(luigi.Task):
             self.dataset_version, self.dataset_name, self.attribute, self.window_size
         )
 
-    output_folder = f"{output_dir}/model"
+    output_folder = os.path.join(output_dir, "model")
 
     def output(self):
         return LocalTarget(
-            f"{self.output_folder}/{self.dataset_name}_model_{self.attribute}_w{self.window_size}_{self.model_name}_v{self.dataset_version}.pkl"
+            os.path.join(
+                self.output_folder,
+                f"{self.dataset_name}_model_{self.attribute}_w{self.window_size}_{self.model_name}_v{self.dataset_version}.pkl",
+            )
         )
 
     def run(self):
@@ -285,11 +313,14 @@ class PredictTrend(luigi.Task):
             ),
         }
 
-    output_folder = f"{output_dir}/prediction"
+    output_folder = os.path.join(output_dir, "prediction")
 
     def output(self):
         return LocalTarget(
-            f"{self.output_folder}/{self.dataset_name}_prediction_{self.attribute}_w{self.window_size}_{self.model_name}_N{self.n_days_to_predict}_v{self.dataset_version}.csv"
+            os.path.join(
+                self.output_folder,
+                f"{self.dataset_name}_prediction_{self.attribute}_w{self.window_size}_{self.model_name}_N{self.n_days_to_predict}_v{self.dataset_version}.csv",
+            )
         )
 
     def run(self):
@@ -378,11 +409,14 @@ class PlotFutureTrend(luigi.Task):
             ),
         }
 
-    output_folder = f"{output_dir}/report_future_trend"
+    output_folder = os.path.join(output_dir, "report_future_trend")
 
     def output(self):
         return LocalTarget(
-            f"{self.output_folder}/{self.dataset_name}_future_trend_{self.attribute}_w{self.window_size}_N{self.n_days_to_predict}_{self.model_name}_v{self.dataset_version}.png"
+            os.path.join(
+                self.output_folder,
+                f"{self.dataset_name}_future_trend_{self.attribute}_w{self.window_size}_N{self.n_days_to_predict}_{self.model_name}_v{self.dataset_version}.png",
+            )
         )
 
     def run(self):
@@ -406,7 +440,7 @@ class PlotFutureTrend(luigi.Task):
         attribute,
         start_train=None,
         date_end_train=None,
-        interval=15,
+        interval=40,
     ):
         import datetime
 
