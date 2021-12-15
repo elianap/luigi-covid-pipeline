@@ -158,7 +158,7 @@ class AggregateInReport(luigi.Task):
     # --> Alternative for dynamic report --> run as --attributes '["intensive_care", "total_positive", "death"]'
     # attributes = ListParameter(default=["intensive_care", "total_positive", "recovered"])
     #
-    attributes = ["intensive_care", "total_positive", "recovered"]
+    attributes = ["total_positive", "recovered", "ratio_molecular"]
 
     def requires(self):
         return {
@@ -197,7 +197,7 @@ class DataTransform(luigi.Task):
 
     dataset_version = DateParameter(default=datetime.date.today())
     dataset_name = Parameter(default="covidIT")
-    attribute = Parameter(default="intensive_care")
+    attribute = Parameter(default="total_positive")
     window_size = IntParameter(default=7)
 
     def requires(self):
@@ -236,7 +236,7 @@ class Modeling(luigi.Task):
 
     dataset_version = DateParameter(default=datetime.date.today())
     dataset_name = Parameter(default="covidIT")
-    attribute = Parameter(default="intensive_care")
+    attribute = Parameter(default="total_positive")
     window_size = IntParameter(default=7)
     model_name = Parameter(default="LR")
 
@@ -291,7 +291,7 @@ class PredictTrend(luigi.Task):
 
     dataset_version = DateParameter(default=datetime.date.today())
     dataset_name = Parameter(default="covidIT")
-    attribute = Parameter(default="intensive_care")
+    attribute = Parameter(default="total_positive")
     window_size = IntParameter(default=7)
     model_name = Parameter(default="LR")
     n_days_to_predict = IntParameter(default=7)
@@ -386,7 +386,7 @@ class PlotFutureTrend(luigi.Task):
     dataset_version = DateParameter(default=datetime.date.today())
 
     dataset_name = Parameter(default="covidIT")
-    attribute = Parameter(default="intensive_care")
+    attribute = Parameter(default="total_positive")
     window_size = IntParameter(default=7)
     model_name = Parameter(default="LR")
     n_days_to_predict = IntParameter(default=7)

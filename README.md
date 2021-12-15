@@ -1,8 +1,10 @@
 # Luigi Covid Pipeline
 
 Managing a ML pipeline with Luigi. 
+
 Case study: reports of the Italian COVID-19 situation. 
-We use the data of the Italian Civil Protection, available at this repository.
+
+We use the data of the Italian Civil Protection, available at this [repository](https://github.com/pcm-dpc/COVID-19).
 
 
 ## Installation
@@ -31,6 +33,8 @@ Run luigi scheduler
 ```shell
 PYTHONPATH='.' luigid
 ```
+
+Run Luigi task
 
 ```shell
 luigi --module <module_name> <task_name> --<parameter1_name> <par_value> 
