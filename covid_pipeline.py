@@ -464,8 +464,8 @@ class PlotFutureTrend(luigi.Task):
         ax.scatter(
             df_windows_predicted[start_test:].index,
             df_windows_predicted[start_test:][f"y_pred_{attribute}"].values,
-            s=3,
-            color="green",
+            s=4,
+            color="orange",
             label=f"{attribute} predicted",
         )
         ax.legend()
