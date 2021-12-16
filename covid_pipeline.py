@@ -114,16 +114,19 @@ class PlotTrend(luigi.Task):
 
     dataset_version = DateParameter(default=datetime.date.today())
     dataset_name = Parameter(default="covidIT")
-    attribute = Parameter(default="intensive_care")
+    attribute = Parameter(default="ratio_molecular")
 
     def requires(self):
         return DataPreProcessing(self.dataset_version, self.dataset_name)
 
-    output_folder = f"{output_dir}/trend"
+    output_folder = os.path.join(output_dir, "trend")
 
     def output(self):
         return LocalTarget(
-            f"{self.output_folder}/{self.dataset_name}_trend_{self.attribute}_v{self.dataset_version}.png"
+            os.path.join(
+                self.output_folder,
+                f"{self.dataset_name}_trend_{self.attribute}_v{self.dataset_version}.png",
+            )
         )
 
     def run(self):
@@ -142,7 +145,6 @@ class PlotTrend(luigi.Task):
         ax.scatter(x_date, y, s=3)
         ax.set(xlabel="Date", ylabel=attribute, title=attribute)
 
-        print(x_date)
         date_form = DateFormatter("%d-%m")
         ax.xaxis.set_major_formatter(date_form)
         ax.xaxis.set_major_locator(mdates.DayLocator(interval=interval))
@@ -155,8 +157,9 @@ class AggregateInReport(luigi.Task):
     dataset_name = Parameter(default="covidIT")
     output_folder = os.path.join(output_dir, "report_trends")
 
-    # --> Alternative for dynamic report --> run as --attributes '["intensive_care", "total_positive", "death"]'
-    # attributes = ListParameter(default=["intensive_care", "total_positive", "recovered"])
+    # --> Alternative for dynamic repor
+    # run as --attributes '["total_positive", "recovered", "ratio_molecular"]'
+    # attributes = ListParameter(default=["total_positive", "recovered", "ratio_molecular"])
     #
     attributes = ["total_positive", "recovered", "ratio_molecular"]
 
