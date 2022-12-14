@@ -148,6 +148,7 @@ class PlotTrend(luigi.Task):
         date_form = DateFormatter("%d-%m")
         ax.xaxis.set_major_formatter(date_form)
         ax.xaxis.set_major_locator(mdates.DayLocator(interval=interval))
+        plt.xticks(rotation=70)
         return fig
 
 
@@ -476,6 +477,7 @@ class PlotFutureTrend(luigi.Task):
         date_form = DateFormatter("%d-%m")
         ax.xaxis.set_major_formatter(date_form)
         ax.xaxis.set_major_locator(mdates.DayLocator(interval=interval))
+        plt.xticks(rotation=70)
         return fig
 
 
